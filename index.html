@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a73e8">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>お弁当</title>
+<style>
+  :root { --green:#34a853; --red:#ea4335; --blue:#1a73e8; --grey:#9aa0a6; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: "Segoe UI","Meiryo",sans-serif; margin:0; background:#f1f3f4; color:#202124; }
+  header { background:var(--blue); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+  header .t { font-size:17px; font-weight:bold; }
+  .lang { font-size:13px; background:rgba(255,255,255,.2); border:none; color:#fff; padding:5px 10px; border-radius:14px; cursor:pointer; }
+  .wrap { max-width:520px; margin:0 auto; padding:14px; }
+  .who { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:14px; color:#555; }
+  .who a { color:var(--blue); text-decoration:none; cursor:pointer; }
+  .setting-bar { display:flex; justify-content:center; align-items:center; gap:6px; font-size:13px; color:#555; margin-bottom:10px; }
+  .setting-bar button { background:#eef1f5; border:1px solid #d8dce0; border-radius:14px; padding:5px 12px; font-size:13px; cursor:pointer; color:#333; }
+  .datebar { display:flex; align-items:center; justify-content:center; gap:10px; margin:6px 0 6px; }
+  .datebar button { background:#fff; border:1px solid #ddd; border-radius:8px; padding:8px 12px; font-size:15px; cursor:pointer; }
+  .datebar .d { font-size:18px; font-weight:bold; min-width:150px; text-align:center; }
+  .card { background:#fff; border-radius:16px; padding:22px 18px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+  .status { font-size:22px; font-weight:bold; margin:6px 0 4px; }
+  .bigicon { font-size:64px; line-height:1; margin:6px 0; }
+  .sub { color:#666; font-size:13px; margin-bottom:8px; }
+  .btn { display:block; width:100%; border:none; border-radius:12px; padding:18px; font-size:20px; font-weight:bold; color:#fff; margin-top:10px; cursor:pointer; }
+  .btn.red{background:var(--red);} .btn.green{background:var(--green);} .btn.grey{background:var(--grey);} .btn.blue{background:var(--blue);}
+  .sites { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .sites button { padding:14px; border-radius:10px; border:2px solid #ddd; background:#fff; font-size:16px; font-weight:bold; cursor:pointer; }
+  .sites button.on { border-color:var(--blue); background:#e8f0fe; color:var(--blue); }
+  .rec { background:#fff; border-radius:12px; margin-top:14px; padding:12px 14px; font-size:14px; }
+  .rec h3 { margin:0 0 8px; font-size:14px; color:#555; }
+  .rec .item { display:flex; justify-content:space-between; padding:5px 0; border-top:1px solid #f0f0f0; }
+  .staff-list { background:#fff; border-radius:12px; overflow:hidden; }
+  .site-grp { padding:8px 14px; background:#f1f3f4; font-weight:bold; font-size:13px; color:#555; }
+  .staff-list button { display:block; width:100%; text-align:left; border:none; border-bottom:1px solid #f0f0f0; background:#fff; padding:16px 14px; font-size:17px; cursor:pointer; }
+  .choice { display:block; width:100%; border:2px solid #ddd; background:#fff; border-radius:14px; padding:20px 16px; margin-top:12px; text-align:left; cursor:pointer; }
+  .choice.on { border-color:var(--blue); background:#e8f0fe; }
+  .choice .big { font-size:19px; font-weight:bold; }
+  .choice .small { font-size:13px; color:#666; margin-top:4px; }
+  .q { text-align:center; font-size:18px; font-weight:bold; margin:14px 0 6px; }
+  .loading { text-align:center; color:#999; padding:40px; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 18px; border-radius:20px; font-size:14px; opacity:0; transition:opacity .2s; }
+  .toast.show { opacity:.95; }
+  .offline { background:#fce8e6; color:#c5221f; text-align:center; font-size:13px; padding:6px; display:none; }
+</style>
+</head>
+<body>
+<header>
+  <span class="t" id="hdrTitle">🍱 今日のお弁当</span>
+  <button class="lang" onclick="toggleLang()" id="langBtn">VI</button>
+</header>
+<div class="offline" id="offline">⚠ インターネットに接続していません / Không có mạng</div>
+<div class="wrap" id="app"><div class="loading">読み込み中…</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 設定: GAS APIのURL（このアプリの唯一の接続先） =====
+var API = 'https://script.google.com/macros/s/AKfycbzNcEcsi7rZAy4r_XYhNSMu56_RwDBpCqRfV_RMVhYD3o-gz8tAQAYwrSIRImfaP7Kg/exec';
+
+function apiCall(action, params) {
+  params = params || {};
+  var qs = 'action=' + encodeURIComponent(action);
+  for (var k in params) qs += '&' + k + '=' + encodeURIComponent(params[k]);
+  return fetch(API + '?' + qs, { method: 'GET' }).then(function (r) { return r.json(); });
+}
+
+// ===== 多言語 =====
+var LANG = localStorage.getItem('bento_lang') || 'ja';
+var T = {
+  ja: { title:'🍱 今日のお弁当', change:'人を変える', today:'今日', pick:'あなたの名前を選んでください',
+        state_yes:'お弁当 あり', state_no:'お弁当 なし',
+        btn_skip:'今日は食べない', btn_undo_skip:'やっぱり食べる', btn_eat:'今日は食べる', btn_undo_eat:'食べるのをやめる',
+        other:'別の場所で食べる', holiday:'お休み（お弁当なし）', month_list:'今月の記録', none:'まだありません', saved:'保存しました', off:'取り消しました',
+        setup_q:'お弁当は基本どうしますか？', setup_daily:'だいたい毎日食べる', setup_daily_sub:'（食べない日だけ記録します）',
+        setup_none:'食べる日だけ記録', setup_none_sub:'（普段は食べません）',
+        setting_daily:'基本：毎日食べる', setting_none:'基本：食べる日だけ', change_setting:'変更' },
+  vi: { title:'🍱 Cơm hộp hôm nay', change:'Đổi người', today:'Hôm nay', pick:'Chọn tên của bạn',
+        state_yes:'CÓ cơm hộp', state_no:'KHÔNG có cơm hộp',
+        btn_skip:'Hôm nay KHÔNG ăn', btn_undo_skip:'Vẫn ăn', btn_eat:'Hôm nay ĂN', btn_undo_eat:'Bỏ chọn ăn',
+        other:'Ăn ở nơi khác', holiday:'Ngày nghỉ (không có cơm)', month_list:'Ghi nhận tháng này', none:'Chưa có', saved:'Đã lưu', off:'Đã hủy',
+        setup_q:'Bạn ăn cơm hộp thế nào?', setup_daily:'Hầu như ngày nào cũng ăn', setup_daily_sub:'(Chỉ ghi ngày KHÔNG ăn)',
+        setup_none:'Chỉ ghi ngày có ăn', setup_none_sub:'(Bình thường không ăn)',
+        setting_daily:'Mặc định: Ăn hằng ngày', setting_none:'Mặc định: Chỉ ghi ngày ăn', change_setting:'Đổi' } };
+function t(k){ return T[LANG][k]; }
+var SITES = [['honsha','本社 Osaka'],['fukuyama','福山 Fukuyama'],['taka','多可 Taka'],['tonez','Tonez']];
+
+var EMP = localStorage.getItem('bento_emp') || '';
+var CUR = todayStr();
+var STATE = null, STAFF = null;
+
+function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); }
+function p2(n){ return ('0'+n).slice(-2); }
+function fmtDate(s){ var p=s.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]); var w=['日','月','火','水','木','金','土'][d.getDay()]; return (+p[1])+'/'+(+p[2])+'('+w+')'; }
+function toast(msg){ var e=document.getElementById('toast'); e.textContent=msg; e.className='toast show'; setTimeout(function(){e.className='toast';},1400); }
+function chosenKey(){ return 'bento_setup_'+EMP; }
+function toggleLang(){ LANG=LANG==='ja'?'vi':'ja'; localStorage.setItem('bento_lang',LANG); document.getElementById('langBtn').textContent=LANG==='ja'?'VI':'日'; document.getElementById('hdrTitle').textContent=t('title'); rerender(); }
+function rerender(){ var mode=document.getElementById('app').dataset.mode; if(!EMP)showPicker(); else if(mode==='setup')showSetup(); else render(); }
+window.addEventListener('online', function(){document.getElementById('offline').style.display='none';});
+window.addEventListener('offline', function(){document.getElementById('offline').style.display='block';});
+
+// 起動
+document.getElementById('langBtn').textContent=LANG==='ja'?'VI':'日';
+document.getElementById('hdrTitle').textContent=t('title');
+if (EMP) loadState(); else showPicker();
+
+function showPicker(){
+  document.getElementById('app').dataset.mode='picker';
+  document.getElementById('app').innerHTML='<div class="loading">'+t('pick')+'…</div>';
+  apiCall('staff_list').then(function(d){
+    STAFF=d.staff; var byS={}; STAFF.forEach(function(s){(byS[s.home_ja||'—']=byS[s.home_ja||'—']||[]).push(s);});
+    var h='<div class="q">'+t('pick')+'</div><div class="staff-list">';
+    Object.keys(byS).forEach(function(site){ h+='<div class="site-grp">'+(site||'—')+'</div>'; byS[site].forEach(function(s){ h+='<button onclick="pick(\''+s.emp+'\')">'+s.name+'</button>'; }); });
+    h+='</div>'; document.getElementById('app').innerHTML=h;
+  }).catch(err);
+}
+function pick(emp){ EMP=emp; localStorage.setItem('bento_emp',emp); CUR=todayStr(); if(localStorage.getItem(chosenKey()))loadState(); else showSetup(); }
+function changePerson(){ localStorage.removeItem('bento_emp'); EMP=''; showPicker(); }
+
+function showSetup(){
+  document.getElementById('app').dataset.mode='setup';
+  document.getElementById('app').innerHTML='<div class="loading">…</div>';
+  apiCall('staff_state',{emp:EMP,date:CUR}).then(function(s){
+    if(!s.ok){err(s.error);return;}
+    var h='<div class="who"><span>'+s.name+'（'+s.home_ja+'）</span><a onclick="changePerson()">'+t('change')+'</a></div>';
+    h+='<div class="q">'+t('setup_q')+'</div>';
+    h+='<button class="choice '+(s.kbn==='毎日あり'?'on':'')+'" onclick="chooseDefault(\'毎日あり\')"><div class="big">🍱 '+t('setup_daily')+'</div><div class="small">'+t('setup_daily_sub')+'</div></button>';
+    h+='<button class="choice '+(s.kbn==='基本なし'?'on':'')+'" onclick="chooseDefault(\'基本なし\')"><div class="big">🍽️ '+t('setup_none')+'</div><div class="small">'+t('setup_none_sub')+'</div></button>';
+    document.getElementById('app').innerHTML=h;
+  }).catch(err);
+}
+function chooseDefault(kbn){
+  document.getElementById('app').style.opacity='0.5';
+  apiCall('staff_setdefault',{emp:EMP,kbn:kbn}).then(function(r){
+    document.getElementById('app').style.opacity='1'; if(!r.ok){err(r.error);return;}
+    localStorage.setItem(chosenKey(),'1'); toast(t('saved')); loadState();
+  }).catch(err);
+}
+
+function loadState(){
+  document.getElementById('app').dataset.mode='home';
+  document.getElementById('app').innerHTML='<div class="loading">…</div>';
+  apiCall('staff_state',{emp:EMP,date:CUR}).then(function(s){ if(!s.ok){err(s.error);return;} STATE=s; render(); }).catch(err);
+}
+
+function render(){
+  var s=STATE, mai=s.kbn==='毎日あり', dayoff=s.dayoff, h='';
+  h+='<div class="who"><span>'+s.name+'（'+s.home_ja+'）</span><a onclick="changePerson()">'+t('change')+'</a></div>';
+  h+='<div class="setting-bar"><span>'+(mai?t('setting_daily'):t('setting_none'))+'</span><button onclick="showSetup()">'+t('change_setting')+'</button></div>';
+  h+='<div class="datebar"><button onclick="moveDay(-1)">◀</button><span class="d">'+fmtDate(CUR)+'</span><button onclick="moveDay(1)">▶</button></div>';
+  h+='<div style="text-align:center;margin-bottom:8px"><button onclick="goToday()" style="background:none;border:none;color:var(--blue);font-size:13px;cursor:pointer">'+t('today')+'</button></div>';
+  if(dayoff){
+    h+='<div class="card"><div class="bigicon">🈳</div><div class="status" style="color:var(--grey)">'+t('holiday')+'</div></div>';
+  } else if(mai){
+    var skip=s.today.cxl, trf=s.today.trf;
+    if(skip){ h+='<div class="card"><div class="bigicon">🚫</div><div class="status" style="color:var(--grey)">'+t('state_no')+'</div><button class="btn green" onclick="toggle(\'skip\')">'+t('btn_undo_skip')+'</button></div>'; }
+    else { h+='<div class="card"><div class="bigicon">🍱</div><div class="status" style="color:var(--green)">'+(trf?t('state_yes')+' ('+siteJa(trf)+')':t('state_yes'))+'</div><button class="btn red" onclick="toggle(\'skip\')">'+t('btn_skip')+'</button><div class="sub" style="margin-top:14px">'+t('other')+'</div><div class="sites">';
+      SITES.forEach(function(x){ h+='<button class="'+(trf===x[0]?'on':'')+'" onclick="move(\''+x[0]+'\')">'+x[1]+'</button>'; }); h+='</div></div>'; }
+  } else {
+    var add=s.today.add;
+    if(add){ h+='<div class="card"><div class="bigicon">🍱</div><div class="status" style="color:var(--green)">'+t('state_yes')+'</div><button class="btn grey" onclick="toggle(\'eat\')">'+t('btn_undo_eat')+'</button></div>'; }
+    else { h+='<div class="card"><div class="bigicon">🍽️</div><div class="status" style="color:var(--grey)">'+t('state_no')+'</div><button class="btn green" onclick="toggle(\'eat\')">'+t('btn_eat')+'</button></div>'; }
+  }
+  h+='<div class="rec"><h3>'+t('month_list')+'（'+s.month+'）</h3>';
+  if(!s.monthRecords.length){ h+='<div style="color:#999">'+t('none')+'</div>'; }
+  else { s.monthRecords.forEach(function(r){ h+='<div class="item"><span>'+fmtDate(r.date)+'</span><span>'+recLabel(r)+'</span></div>'; }); }
+  h+='</div>'; document.getElementById('app').innerHTML=h;
+}
+function siteJa(code){ for(var i=0;i<SITES.length;i++)if(SITES[i][0]===code)return SITES[i][1].split(' ')[0]; return code; }
+function recLabel(r){ if(r.type==='CXL')return '🚫'; if(r.type==='ADD')return '🍱'; if(r.type==='TRF')return '📍 '+siteJa(r.site); return r.type; }
+function moveDay(delta){ var p=CUR.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]+delta); CUR=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()); loadState(); }
+function goToday(){ CUR=todayStr(); loadState(); }
+function toggle(action){ var was=action==='skip'?STATE.today.cxl:STATE.today.add; document.getElementById('app').style.opacity='0.5';
+  apiCall('staff_toggle',{emp:EMP,date:CUR,act:action}).then(function(s){ STATE=s; document.getElementById('app').style.opacity='1'; render(); toast(was?t('off'):t('saved')); }).catch(err); }
+function move(site){ var was=STATE.today.trf===site; document.getElementById('app').style.opacity='0.5';
+  apiCall('staff_toggle',{emp:EMP,date:CUR,act:'move',site:site}).then(function(s){ STATE=s; document.getElementById('app').style.opacity='1'; render(); toast(was?t('off'):t('saved')); }).catch(err); }
+function err(e){ document.getElementById('app').innerHTML='<div class="loading">⚠ '+(e&&e.message||e||'エラー')+'</div>'; document.getElementById('app').style.opacity='1'; }
+
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('service-worker.js').catch(function(){}); }
+</script>
+</body>
+</html>
