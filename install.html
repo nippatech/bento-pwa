@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a73e8">
+<title>お弁当アプリ インストール</title>
+<style>
+:root{--blue:#1a73e8;--fg:#202124;--muted:#5f6368;--line:#dadce0;--bg:#f1f3f4;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;color:var(--fg);background:var(--bg);line-height:1.6}
+.wrap{max-width:480px;margin:0 auto;padding:24px 18px 48px}
+header{text-align:center;margin-bottom:24px}
+.icon{width:88px;height:88px;border-radius:20px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:22px;margin:14px 0 2px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dl{display:block;text-align:center;background:var(--blue);color:#fff;text-decoration:none;font-size:18px;font-weight:700;padding:16px;border-radius:12px}
+.dl:active{opacity:.85}
+.dlnote{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+ol{margin:0;padding-left:22px}
+ol li{margin:8px 0}
+.warn{background:#fef7e0;border:1px solid #feefc3;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:14px}
+.qr{text-align:center}
+.qr img{width:220px;height:220px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px}
+.qrcap{color:var(--muted);font-size:13px;margin-top:8px}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
+h2{font-size:16px;margin:0 0 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="icon" src="icon-192.png" alt="お弁当">
+    <h1>お弁当アプリ</h1>
+    <p class="sub">社内用インストールページ（Android）</p>
+  </header>
+
+  <div class="card">
+    <a class="dl" href="bento_v1.0.apk" download="お弁当_v1.0.apk">📥 アプリをダウンロード</a>
+    <p class="dlnote">お弁当_v1.0.apk（約0.9MB）</p>
+  </div>
+
+  <div class="card">
+    <h2>インストール手順</h2>
+    <ol>
+      <li>上の「ダウンロード」ボタンを押す</li>
+      <li>ダウンロードした <b>お弁当_v1.0.apk</b> をタップ</li>
+      <li>初回は「<b>提供元不明のアプリ</b>」の許可を求められるので<b>許可</b>する</li>
+      <li>「インストール」を押す → 完了後アプリ「<b>お弁当</b>」を起動</li>
+    </ol>
+    <div class="warn">💡 iPhoneには対応していません（Android専用）。ブラウザで使う場合は <a href="./">お弁当アプリ（Web版）</a> をどうぞ。</div>
+  </div>
+
+  <div class="card qr">
+    <h2>このページのQRコード</h2>
+    <img src="qr.png" alt="QRコード">
+    <p class="qrcap">画面に表示・印刷して、各自のスマホで読み取ってください</p>
+  </div>
+
+  <p class="foot">お弁当アプリ v1.0 ／ ニッパテック 業務部</p>
+</div>
+</body>
+</html>
