@@ -1,5 +1,5 @@
 // お弁当PWA サービスワーカー（アプリシェルのみキャッシュ。データは常にオンライン取得）
-var CACHE = 'bento-shell-v2';
+var CACHE = 'bento-shell-v3';
 var SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
