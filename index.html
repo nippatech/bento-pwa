@@ -159,7 +159,7 @@ function render(){
     var skip=s.today.cxl, trf=s.today.trf;
     if(skip){ h+='<div class="card"><div class="bigicon">🚫</div><div class="status" style="color:var(--grey)">'+t('state_no')+'</div><button class="btn green" onclick="toggle(\'skip\')">'+t('btn_undo_skip')+'</button></div>'; }
     else { h+='<div class="card"><div class="bigicon">🍱</div><div class="status" style="color:var(--green)">'+(trf?t('state_yes')+' ('+siteJa(trf)+')':t('state_yes'))+'</div><button class="btn red" onclick="toggle(\'skip\')">'+t('btn_skip')+'</button><div class="sub" style="margin-top:14px">'+t('other')+'</div><div class="sites">';
-      SITES.forEach(function(x){ h+='<button class="'+(trf===x[0]?'on':'')+'" onclick="move(\''+x[0]+'\')">'+x[1]+'</button>'; }); h+='</div></div>'; }
+      SITES.forEach(function(x){ if(x[0]===s.home_site) return; h+='<button class="'+(trf===x[0]?'on':'')+'" onclick="move(\''+x[0]+'\')">'+x[1]+'</button>'; }); h+='</div></div>'; }
   } else {
     var add=s.today.add;
     if(add){ h+='<div class="card"><div class="bigicon">🍱</div><div class="status" style="color:var(--green)">'+t('state_yes')+'</div><button class="btn grey" onclick="toggle(\'eat\')">'+t('btn_undo_eat')+'</button></div>'; }
